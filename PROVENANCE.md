@@ -29,6 +29,13 @@ frozen files and definition closure, with dedicated regression tests for
 provider bypasses and line-ending changes. Repository scrub patterns can be
 supplied from an external file without embedding private names in the export.
 
+The maintained portable core also retains the development/review/integration
+guidance as an orchestrator reference. Statement review distinguishes exact
+pre-approval commands from manifest-bound frozen audits. Performance reports
+separate measured CPU from summed Lake elapsed times, parse seconds and
+milliseconds, and report module adoption according to the target project's
+policy. Existing skill installations are not migrated by repository edits.
+
 Public-source attributions are in [SOURCES.md](SOURCES.md). Adapted MIT
 material is identified inline and in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 References to the Apache-2.0 Lean-team workflow collection remain attributed;

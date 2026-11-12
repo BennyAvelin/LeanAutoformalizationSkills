@@ -96,6 +96,22 @@ Start a new agent session if the installed skills do not appear. In Codex,
 invoke `$lean-workflow`; in Claude Code, invoke `/lean-workflow`. Both agents
 can also select a relevant skill from an ordinary request.
 
+### Maintain one shared core
+
+Treat `skills/<name>/` in this checkout as the editable shared source. Keep
+project-specific build commands, carriers, resource limits, and agent policies
+in the target project's instructions. A project router may select these skills
+and point to local policy; it should not duplicate their audit or proof rules.
+
+If another skill collection already supplies the same names, compare complete
+folders before selecting which installation to use. Reconcile useful changes
+into this source, including scripts and regression tests, rather than installing
+competing versions. The installer checks conflicts only in its chosen
+destination; a clean dry-run does not rule out duplicate names in another
+discovery directory. Editing this checkout does not migrate existing copies
+or links to another collection. Any later installation migration is a separate,
+deliberate operation, preserving unrelated writing and website skills.
+
 ## Try it on a Lean project
 
 Start Codex or Claude Code in your **Lean project**, then ask:
@@ -259,10 +275,13 @@ and status are maintained separately by the formalization workflow.
 The workflow has two independent review gates:
 
 1. **Statement seal.** Pin the mathematical source and any author rulings.
-   Elaborate the complete proposed Lean declaration. An independent reviewer
-   checks every binder, implicit argument, carrier, definition, constant
+   Elaborate the complete proposed Lean declaration. Use `lean-statement-audit`
+   in pre-approval mode before an approved frozen manifest exists. An
+   independent reviewer checks every binder, implicit argument, carrier, definition, constant
    dependency, and conclusion against the source. The author approves the
    complete command, which is frozen in a one-declaration file and manifest.
+   Verify that the frozen identity matches the reviewed command. Pre-approval
+   review grants no proof or frozen-anchor status.
 2. **Proof seal.** Prove the exact frozen statement using independently checked
    prerequisites. Integrate its proof without changing the approved statement,
    compile it, inspect its axioms and dependencies, and obtain a fresh source
@@ -331,6 +350,7 @@ The scripts travel with their skills:
 | [lean-compile-gate.sh](skills/lean-orchestrator/assets/lean-compile-gate.sh) | Limit concurrent Lean compiles machine-wide when several agents build at once |
 | [check_lean_modules.py](skills/lean-project-architecture/scripts/check_lean_modules.py) | Check the declared module-header and visibility policy |
 | [count_lean_lines.py](skills/lean-elaboration-test/scripts/count_lean_lines.py) | Count Lean files while separating comment-only material |
+| [parse_build_timings.py](skills/lean-elaboration-test/scripts/parse_build_timings.py) | Extract elapsed Lake build-action timings in seconds or milliseconds |
 | [install_skills.py](scripts/install_skills.py) | Install whole skill folders without replacing existing skills |
 | [verify_repository.py](scripts/verify_repository.py) | Check this collection's metadata, resources, and local links |
 
@@ -355,6 +375,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 skills/build-proof-dependency-graph/scripts/te
 PYTHONDONTWRITEBYTECODE=1 python3 skills/lean-orchestrator/tests/test_check_frozen_anchors.py
 PYTHONDONTWRITEBYTECODE=1 python3 skills/lean-orchestrator/tests/test_lean_compile_gate.py
 PYTHONDONTWRITEBYTECODE=1 python3 skills/lean-project-architecture/tests/test_check_lean_modules.py
+PYTHONDONTWRITEBYTECODE=1 python3 skills/lean-elaboration-test/tests/test_measurement_helpers.py
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests
 ```
 

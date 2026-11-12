@@ -8,6 +8,11 @@ This file records public sources credited by the retained Lean references. It is
 - [Theorem Proving in Lean 4](https://lean-lang.org/theorem_proving_in_lean4/).
 - [Functional Programming in Lean](https://lean-lang.org/functional_programming_in_lean/).
 - [Lean community Zulip](https://leanprover.zulipchat.com/).
+- Lake's build timing and log formatting implementations:
+  [Common.lean](https://github.com/leanprover/lean4/blob/master/src/lake/Lake/Build/Common.lean)
+  and [Run.lean](https://github.com/leanprover/lean4/blob/master/src/lake/Lake/Build/Run.lean).
+  These distinguish elapsed build-action durations from measured CPU time;
+  inspect the target project's pinned revision when parsing logs.
 - [cameronfreer/lean4-skills](https://github.com/cameronfreer/lean4-skills), cited by the inherited math-to-Lean and operational workflow references (MIT; notice reproduced in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)).
 - [leanprover/skills](https://github.com/leanprover/skills), cited by the inherited workflow references (Apache-2.0; see [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)).
 - Terence Tao's public Lean proof tours, cited by the inherited search and tactic references.

@@ -1,13 +1,45 @@
 ---
 name: lean-statement-audit
-description: Audit an exact manifest-bound Lean theorem or definition against its pinned mathematical source, with fail-closed binder, carrier, definition-body, characterization, consumption, and axiom checks. Use before approving a frozen declaration, after any frozen version change, before marking a source node proved, and before a theorem or section closure claim.
+description: Independently review an exact proposed Lean declaration before author approval, or audit a manifest-bound frozen declaration against its pinned source. Check binders, carriers, definition bodies, characterization, consumption, and axioms before freezing or claiming proof completion.
 ---
 
-# Audit an exact frozen Lean declaration
+# Review or audit an exact Lean declaration
 
-The audit target is the actual frozen Lean declaration. A Markdown note,
-“contract,” candidate, probe, helper, alias, facade, or similarly named theorem
-is never a substitute.
+The target is the complete exact Lean command being proposed for author
+approval, or the actual frozen declaration being certified. A Markdown note,
+“contract,” helper, alias, facade, or similarly named theorem is never a
+substitute. A proposed command can receive independent statement review; it
+has no frozen-anchor, proved-dependency, or certification status.
+
+## Choose the review mode
+
+**Pre-approval review:** use this before a frozen file or approved manifest
+exists. Pin the source revision/ranges and rulings, the complete proposed
+command and imports, its intended fully qualified export, and the exact
+meaning-carrying definition closure. Record hashes of the reviewed command and
+definitions so author approval can identify the same bytes. Do not create an
+AUTHOR_APPROVED manifest or mark the declaration frozen during this review.
+
+An independent reviewer reconstructs the source and applies the binder and
+definition checks below. Elaborate the exact command in an untracked temporary
+file. An unproved theorem may use a temporary `by sorry` solely to check its
+type; this diagnostic is unavailable to project consumers and is deleted after
+the commands and results are recorded. Definitions must have their real bodies
+and proved prerequisites. A characterization-defined object still requires its
+proved and audited well-definedness theorem before its definition can pass.
+
+Emit `REVIEW_MODE: PRE_APPROVAL`, `DECLARATION_FIDELITY: PASS|FAIL`, and
+`PROOF_STATUS: NOT_CERTIFIED`, with the binder table or definition verdicts,
+elaboration evidence, reviewed identities, and unresolved questions. A passing
+review makes the command ready to present to the author; it neither grants
+author approval nor closes a theorem. After approval, freeze and manifest the
+same command, then check the frozen identity. A command or semantic-definition
+change invalidates the pre-approval review.
+
+**Frozen audit:** use the manifest-bound procedure below after freezing,
+after a frozen version change, and before proof or section closure. This mode
+requires actual approved files and manifest identity. A pre-approval report
+cannot replace these checks or the independent proof seal.
 
 For a theorem, proving B → A is not proving source statement A, even if B is
 proved elsewhere. For a definition, constructing some inhabitant of the right
@@ -19,11 +51,12 @@ the declaration while leaving Lean code that compiles.
 Before author approval or manifestation, every theorem type and every
 definition type/body must be the exact final source-facing declaration.
 Pre-approval elaboration may use an untracked temporary file containing that
-exact command; delete it after use. Tracked candidates and proposed Lean
-surfaces have no audit status.
+exact command; delete it after use. Tracked candidates have no frozen or
+certification status. Independent pre-approval review does not promote them.
 
-Only the proof body of an exact author-approved keystone theorem may be the
-manifest-bound `by sorry` with state `DRAFT_SORRY`. This is the normal
+In persistent project files, only the proof body of an exact author-approved
+keystone theorem may be the manifest-bound `by sorry` with state `DRAFT_SORRY`.
+This is the normal
 statement-freezing stage, not a proof shortcut. Its statement is already final.
 It is FROZEN_UNPROVED, unavailable,
 non-importable by production/provider code, and not proof progress. Definitions
@@ -32,7 +65,7 @@ module/export is also quarantined from every consumer except the provider
 itself and the frozen anchor until sealing and audit, so implementation code
 cannot bypass the frozen export.
 
-## Pin the exact target
+## Pin the frozen target
 
 Before reading implementation code, pin from the project manifest:
 
@@ -128,9 +161,13 @@ proved, unless the source explicitly states them as premises. Classical.choose
 from the proved ∃! is legitimate; a choice from mere existence or a non-unique
 family fails.
 
-Audit the definition and characterization theorem as one semantic unit, even
-when each occupies its own one-declaration file. Both must be manifested and
-versioned together and landed in the same commit. Every downstream proof/graph use must depend on the
+Audit the definition and characterization theorem as one semantic unit. In
+pre-approval mode, independently review both exact commands and require a
+complete, sorry-free characterization proof in the temporary unit; pin both
+reviewed identities without creating an approved manifest. After author
+approval, manifest and version both together and land them in the same commit,
+even when each occupies its own one-declaration file. Frozen audits verify
+these bindings. Every downstream proof/graph use must depend on the
 characterization theorem, not merely on the definition's result type.
 
 Automatically fail a definition that uses or hides any of the following to
@@ -175,7 +212,9 @@ Use transient, reproducibly generated Lean checks—never tracked candidate
 files:
 
 - for a theorem, an example at the independently reconstructed exact type whose
-  body is exact Frozen.export;
+  body is the exact target export (the proposed export in pre-approval mode,
+  `Frozen.export` in frozen mode); an application to a temporary `sorry` only
+  checks the proposed type and never provides proof or axiom-closure evidence;
 - for a literal definition, checks of its elaborated type and defining
   equations;
 - for a characterized definition, exact applications of its full
@@ -198,7 +237,7 @@ approved trust boundary exactly as local rules specify.
 For definitions and their characterization theorems, require sorry-free axiom
 closure before they are admitted as a semantic unit.
 
-## Fail-fast procedure
+## Frozen audit: fail-fast procedure
 
 1. Pin manifest identity, source, exact declaration bytes, state, and rulings.
 2. Reconstruct the source mathematics independently.

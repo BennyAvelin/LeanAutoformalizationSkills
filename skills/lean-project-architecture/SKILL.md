@@ -30,7 +30,8 @@ For each source-facing declaration:
 3. identify and recursively inspect every meaning-carrying carrier, definition,
    typeclass, and bundled assumption;
 4. elaborate the exact final theorem type or exact final definition body;
-5. obtain independent source/binder/semantics review;
+5. obtain independent pre-approval source/binder/semantics review using
+   `lean-statement-audit` (no approved manifest is required in that mode);
 6. show the complete Lean command to the author; and
 7. only after approval, put one declaration in one frozen file and bind its
    source, path, fully qualified export, frozen bytes, and state in a manifest.

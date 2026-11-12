@@ -93,7 +93,9 @@ Do this before extracting their proof graph or assigning downstream proof work.
 3. Resolve every meaning-carrying Lean definition and carrier. Expand bundled
    assumptions and typeclass inputs far enough to expose their logical content.
 4. Elaborate the exact final command transiently, then have a reviewer who did
-   not write it compare that command directly with the source. Reject the first
+   not write it compare that command directly with the source using
+   `lean-statement-audit` in pre-approval mode. That mode does not require an
+   approved manifest and grants no frozen or proof status. Reject the first
    premise, field, fallback, or semantic choice not justified by source data,
    standing assumptions, typing, or an explicit author ruling.
 5. Show the author the complete exact declaration: imports, explicit/implicit/
@@ -128,6 +130,16 @@ Build the graph only after its root declarations are actual approved anchors.
 Assign work from the dependency-ready frontier. Off-frontier work needs a
 recorded reason, such as source-faithful infrastructure needed by several
 nodes.
+
+## Develop, review, and integrate
+
+Keep ordinary proof iteration separate from certification. Read
+[references/proof-iteration.md](references/proof-iteration.md) when organizing
+worker validation, review packets, or integration. It covers scratch ownership,
+checks of real consumers, reusable validation evidence, and bounded work in
+progress. Routine tactic failures do not require a new certification packet
+unless the repository explicitly requires one; accepted results still need
+both audit seals.
 
 ## Prove below the anchors
 
@@ -204,8 +216,8 @@ Registry intake rules apply only when that registry is a project target.
   the imports, `public section` and the namespace lines belong to the frozen
   prefix. Frozen and source-facing definitions are `@[expose]`. The bundled
   `check_frozen_anchors.py` requires every frozen file to be a module (a
-  legacy repository awaiting its port passes only with
-  `--allow-non-module`). It rejects a frozen declaration or sealed export
+  project that has not adopted modules uses `--allow-non-module`; this does
+  not waive a repository or registry module requirement). It rejects a frozen declaration or sealed export
   that the module does not export (outside `public section` and not
   `public`), and resolves `_root_.X` to `X`.
 - **Worker briefs.** Repeat the repository's module rule when it applies.
@@ -244,7 +256,8 @@ SEALED_THIS_TURN: <count and exports>
 ```
 
 Follow repository build and shared-checkout rules exactly. Never add custom
-axioms, heartbeat overrides, unregistered placeholders, or oversized files.
+axioms or unregistered placeholders. Heartbeat and file-size limits follow the
+repository's policy; raising a limit does not demonstrate a performance fix.
 Run required cache and upstream-integrity checks before Lean/Lake. Never wait,
 stop, or refuse work merely because another Lean/Lake process is running;
 process presence is not evidence of an upstream write. Preserve other sessions'

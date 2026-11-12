@@ -622,7 +622,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--root", required=True, type=Path)
     parser.add_argument("--manifest", required=True, type=Path)
     parser.add_argument("--allow-non-module", action="store_true",
-                        help="accept non-module frozen files; only for a legacy repository awaiting its module port")
+                        help="accept non-module frozen files when the project has not adopted the module system")
     args = parser.parse_args(argv)
     try:
         data = json.loads(args.manifest.read_text(encoding="utf-8"))
