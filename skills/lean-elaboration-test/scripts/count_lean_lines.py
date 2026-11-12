@@ -5,7 +5,8 @@ Counts .lean files and lines at a git ref (stable snapshot — never the working
 tree), excluding files that are entirely comments/whitespace. A line counts
 as code if it contains at least one non-whitespace character outside comments
 and string literals. Files that are not Lean modules (no `module` header;
-`lakefile.lean` exempt) are counted and listed: every file must be a module.
+`lakefile.lean` exempt) are counted and listed for information. Module adoption
+is a project policy, not a requirement of this size snapshot.
 
 Usage:  python3 count_lean_lines.py [REF] [PATH_PREFIX ...]
         REF defaults to HEAD. Optional prefixes restrict to e.g. 'Project'.
@@ -135,13 +136,13 @@ def main():
             ["git", "show", f"{ref}:{f}"],
             capture_output=True, text=True, check=True,
         ).stdout
-        if f.rsplit("/", 1)[-1] != "lakefile.lean" and not has_module_header(text):
-            non_module.append(f)
         lines, flags = code_line_flags(text)
         n_code = sum(flags)
         if n_code == 0:
             comment_only.append(f)
             continue
+        if f.rsplit("/", 1)[-1] != "lakefile.lean" and not has_module_header(text):
+            non_module.append(f)
         counted += 1
         # split("\n") yields a trailing empty element for newline-terminated
         # files; count physical lines the way wc -l does
@@ -162,7 +163,7 @@ def main():
         for f in comment_only:
             print(f"  {f}")
     if non_module:
-        print("\nnon-module files (must be ported):")
+        print("\nnon-module files (informational):")
         for f in non_module:
             print(f"  {f}")
 

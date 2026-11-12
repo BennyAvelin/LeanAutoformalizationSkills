@@ -1,6 +1,6 @@
 ---
 name: lean-elaboration-test
-description: Run a repeatable elaboration test of ONE Lean 4 repo and write a dated report — snapshot size (date, commit, lines excluding comment-only files), clean project-only rebuild with wall/CPU/parallelism/RSS, heavy-tail and per-namespace breakdown, warm own-file profiles of the worst files with likely causes, and improvement suggestions. Use when asked to run an elaboration test, profile a repo build, or track elaboration health over time.
+description: Run a repeatable elaboration test of one Lean 4 repository and write a dated report of source size, project-only rebuild wall time and CPU use, elapsed build-action timings, heavy tails, and warm own-file profiles. Use for repository build profiling or tracking elaboration health over time.
 ---
 
 # Lean Elaboration Test
@@ -48,11 +48,17 @@ counts from `git ls-tree` at the measured commit; a file is comment-only if
 it has no non-comment, non-whitespace character — such files are excluded
 from the file/line counts and listed by name). It also counts and lists
 non-module files (no `module` header; `lakefile.lean` exempt). Record the
-count. It must be 0; the script reports it but does not fail.
+count for non-comment-only files. It is informational unless the project has
+adopted the module system or a target registry requires it. In that setting,
+run the architecture skill's module checker; profiling alone never requires a
+module migration.
 
-Also record what the *build root* covers if it differs from the git tree
-(quarantined/off-facade modules make tree > built; report both, and the job
-count from Phase 2 is the built-size ground truth).
+Also record what the *build root* covers if it differs from the git tree.
+Quarantined/off-facade modules can make the source tree larger than the build
+scope. For built size, identify unique own-repository Lean modules actually
+compiled using their Lean build facet, excluding replays, repeated actions,
+and native compilation jobs. Report total progress jobs separately; they are
+not a Lean module count.
 
 **Verify the default target covers what you think it covers.** A prior report
 series measured partial builds because the root facade silently omitted a
@@ -93,21 +99,40 @@ Record from `/usr/bin/time -v` + the log:
 ## Phase 3 — Per-file extraction from the build log
 
 ```bash
-grep -oE "Built <Root>\.[^ ]+ \(([0-9.]+)s\)" <log>
+python3 scripts/parse_build_timings.py <log> --root-module <Root>
 ```
 
-- **Cumulative logged CPU** = Σ of Built times (sub-1s jobs are unlogged —
-  state the timing-visible fraction).
-- **Implied parallelism** = cumulative logged CPU ÷ wall-clock. This is the
-  comparability gate for trends.
-- **Per-line cost** = logged CPU ÷ code lines (ms/line) — the size-normalized
-  health metric.
+Use the bundled [scripts/parse_build_timings.py](scripts/parse_build_timings.py)
+from the installed skill path, or copy it to the target repository. Repeat
+`--root-module` for each project library. It accepts seconds and milliseconds,
+strips ANSI formatting, preserves optional/repeated build actions and facet suffixes,
+and counts actions with no timing separately. Check its root filters against
+the actual captions in the pinned Lake version; an empty match is an error.
+
+- **Measured CPU** = user CPU + system CPU from the timed build process tree.
+  **CPU utilization in core equivalents** = measured CPU ÷ elapsed wall-clock.
+  This measures average CPU use, not configured job concurrency.
+- **Sum of logged build-action elapsed times** = Σ of parsed `Built` durations.
+  Lake uses a monotonic clock for these durations; their sum is not CPU time.
+  Report timed/untimed action counts, target/facet scope, and repeated actions.
+  This sum is diagnostic; it does not measure CPU utilization or establish
+  complete build coverage. Progress counters may also include cache replays
+  and non-Lean jobs.
+- **Per-line CPU cost** = measured CPU ÷ code lines (ms/line), with the measured
+  source/build scope stated. Keep summed elapsed time per line separately
+  labeled if it is useful.
 - **Heavy-tail tiers**: file counts ≥10s / ≥20s / ≥30s / ≥40s (the policy
-  metric that should only ratchet down).
+  thresholds to track when comparable targets and conditions are available).
 - **Top-30 worst files**, annotated `vs <prior report date>` where a prior
-  snapshot exists.
-- **Per-namespace / per-directory aggregation** of logged CPU with Δ vs
-  prior — this localizes regressions to groups of files.
+  snapshot exists. State which Lean facet supplies each file timing; do not
+  count native compilation facets or repeated actions as distinct Lean files.
+- **Per-namespace / per-directory aggregation** of logged elapsed times with
+  Δ vs prior — this locates slow groups, without claiming per-namespace CPU.
+
+Lake's timing and display implementations are in
+[Common.lean](https://github.com/leanprover/lean4/blob/master/src/lake/Lake/Build/Common.lean)
+and [Run.lean](https://github.com/leanprover/lean4/blob/master/src/lake/Lake/Build/Run.lean).
+Check the project's pinned version when its output differs.
 
 ## Phase 4 — Warm own-file profiling of the worst files
 
@@ -136,14 +161,18 @@ file's dominant phase and likely cause:
 
 ## Phase 5 — Trend comparison (when prior reports exist)
 
-- Compare wall-clock ONLY at matched parallelism and same timing tool;
-  otherwise compare cumulative logged CPU and say so.
+- Compare wall-clock under matched job settings, hardware, target, toolchain,
+  cache state, and timing tool. Otherwise report measured CPU and summed
+  elapsed action times separately, with their comparability limits. CPU
+  utilization alone does not establish matched scheduling conditions.
 - Contention artifact check before believing any regression: (a) user CPU
-  down while logged-sum up? (b) parallelism jumped? (c) same-file timings
+  down while logged elapsed-sum rises? (b) job settings or CPU utilization
+  changed? (c) same-file timings
   moving in opposite directions? Any two → report the run as
   contention-bound and skip structural conclusions.
-- Predicted-vs-actual: Δlines × prior ms/line vs actual ΔCPU. Big ratios
-  (>2×) mean downstream-load compounding or a regression, not just growth.
+- Predicted-vs-actual: Δlines × prior measured CPU ms/line vs actual ΔCPU.
+  Big ratios (>2×) are prompts to investigate changed targets, downstream
+  load, or a regression; they do not establish a cause.
 - Flag any single file on a monotonic climb across ≥3 reports.
 
 ## Phase 6 — The report
@@ -155,13 +184,14 @@ naming) at the repo root. Sections, in order:
    commands, co-running load observed, which build target.
 2. **Size snapshot** — files, lines, non-comment lines, comment-only files
    excluded, built-vs-tree scope note.
-3. **Headline table** — wall, user/sys CPU, %CPU, parallelism, peak RSS,
-   jobs, per-line ms; columns vs prior snapshots with comparability caveats.
+3. **Headline table** — wall, user/sys CPU, %CPU, CPU core equivalents,
+   configured job settings, peak RSS, action counts, summed logged elapsed
+   time, and per-line CPU ms; prior snapshots with comparability caveats.
 4. **Build health** — exit status, errors, sorries vs authorized, warning
    census (top kinds), rule compliance (no upstream compiles, file-size
    limits, heartbeat overrides).
 5. **Heavy tail** — tier table (≥10/20/30/40s) with Δ vs prior; top-30 files.
-6. **Per-namespace CPU** with Δ vs prior.
+6. **Per-namespace logged elapsed times** with Δ vs prior.
 7. **Own-file profiles** of the worst files — the phase table, dominant
    category per file.
 8. **Findings ranked by actionability** — each with the evidence, the named

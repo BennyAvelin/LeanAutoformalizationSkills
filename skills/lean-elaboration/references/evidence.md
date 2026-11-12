@@ -13,6 +13,9 @@ Several corrections mattered more than any individual optimization:
   dependency load, artifact serialization, and native compilation can inflate
   it. Observed build logs sometimes substantially overstated fixable own-file
   cost; direct profiles were needed to isolate it.
+- Lake's `Built` durations are elapsed build-action times, not CPU counters.
+  Keep their sum separate from measured user/system CPU. Include both second
+  and millisecond units, and identify missing timings and repeated facets.
 - Wall-clock comparisons require the same timing tool and comparable
   parallelism. User CPU is more stable across differently scheduled runs, but
   still needs the same target, toolchain, and source scope.
@@ -20,10 +23,10 @@ Several corrections mattered more than any individual optimization:
   series missed a substantial subtree until the root target was audited.
 - Presence of other Lean processes does not prove contamination. Treat a run
   as contention-bound when multiple signals agree: logged work rises while
-  user CPU falls, implied parallelism shifts materially, and individual files
+  user CPU falls, job settings or CPU utilization shift materially, and individual files
   move in opposite directions.
-- Sub-second jobs may be absent from Lake's timing lines. State the visible
-  fraction instead of presenting their sum as total CPU.
+- Depending on Lake's version and output mode, actions may lack a timing.
+  State the visible fraction instead of presenting their sum as total CPU.
 - Existing reports are evidence. Before diagnosing a new regression, compare
   the exact module set and read prior measurements; a remembered baseline may
   predate added modules or changed build coverage.

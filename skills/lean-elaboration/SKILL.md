@@ -51,7 +51,10 @@ commit.
    | `type checking` | large terms | break into named `have`s / helper lemmas |
 
 3b. **Before touching any proof, ask whether the cost is even in the proof.**
-   Replace the suspect declaration's body with `sorry` and re-profile. If the
+   In an untracked experimental copy outside production/provider imports,
+   replace the suspect declaration's body with `sorry` and re-profile. Delete
+   the copy after recording the result; never edit a frozen file or use this
+   diagnostic as proof evidence. If the
    phase total is **unchanged**, the cost is in elaborating the *statement*, and
    no tactic, simp, cache, or import lever can touch it — go to lever 8. This
    one-minute test prevents whole afternoons of proof tuning against a signature
@@ -67,8 +70,10 @@ commit.
 
 4. **Apply ONE intervention** — never stack changes before measuring.
 5. **A/B and keep-or-revert** — compare a baseline and one edited variant of
-   the same file; use at least three runs if relying on wall-clock. Profile deltas are
-   wall-clock-noise-immune and win when they disagree. Keep the edit only if
+   the same file; use repeated runs when timings matter. Profiler phase totals
+   help attribute cost but can also vary with contention. If they disagree
+   with wall-clock results, investigate and repeat under matched conditions.
+   Keep the edit only if
    the relevant phase drops ≥2s (or ≥10%) without moving cost somewhere worse.
    Three consecutive failures of one technique on a file family = stop
    applying that technique to the family.

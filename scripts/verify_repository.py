@@ -29,6 +29,8 @@ REQUIRED_PYTHON = (
     "skills/lean-project-architecture/scripts/check_lean_modules.py",
     "skills/lean-project-architecture/tests/test_check_lean_modules.py",
     "skills/lean-elaboration-test/scripts/count_lean_lines.py",
+    "skills/lean-elaboration-test/scripts/parse_build_timings.py",
+    "skills/lean-elaboration-test/tests/test_measurement_helpers.py",
 )
 LINK = re.compile(r"(?<!!)\[[^\]\n]+\]\(([^)\n]+)\)")
 
